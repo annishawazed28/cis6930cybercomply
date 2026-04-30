@@ -1,3 +1,4 @@
+# This may contain AI generated code
 # tests/test_integration.py
 # Live tests that require the stig-target container to be running.
 #
