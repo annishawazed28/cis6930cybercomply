@@ -1,0 +1,32 @@
+# This code may contain AI geneated content
+
+FROM rockylinux:9
+
+# Install OpenSCAP + STIG content + utilities + SSH server
+RUN dnf install -y \
+        openscap-scanner \
+        scap-security-guide \
+        procps-ng \
+        util-linux \
+        openssh-server && \
+    dnf clean all
+
+# Create fake SSH config directory + file
+RUN mkdir -p /etc/ssh && \
+    touch /etc/ssh/sshd_config
+
+# Generate host keys (required for sshd to exist cleanly)
+# RUN ssh-keygen -A
+
+# Intentionally misconfigure the system so the scan finds real failures.
+RUN sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   99999/' /etc/login.defs && \
+    sed -i 's/^PASS_MIN_LEN.*/PASS_MIN_LEN    1/'      /etc/login.defs && \
+    echo "PermitRootLogin yes"       >> /etc/ssh/sshd_config && \
+    echo "PermitEmptyPasswords yes"  >> /etc/ssh/sshd_config
+
+# Create the shared results directory (mounted as a bind volume)
+RUN mkdir -p /results
+
+WORKDIR /results
+
+CMD ["sleep", "infinity"]
