@@ -1,0 +1,74 @@
+# This code may contain AI geneated content
+services:
+
+  # ── Rocky Linux 9 target (the system being scanned) ─────────
+  target:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.target
+    container_name: stig-target
+    hostname: stig-target
+    command: sleep infinity
+    volumes:
+      - ./results:/results
+      - ./reports:/reports
+    cap_add:
+      - SYS_ADMIN
+      - AUDIT_CONTROL
+    security_opt:
+      - seccomp:unconfined
+    networks:
+      - stig-net
+
+  # ── Python agent (runs scans, calls Ollama, writes reports) ──
+  agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    container_name: stig-agent
+    depends_on:
+      - target
+    volumes:
+      - .:/app
+      - ./results:/results
+      - ./reports:/reports
+      - ./knowledge_base:/app/knowledge_base
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TARGET_CONTAINER: "stig-target"
+      OLLAMA_URL: "http://host.docker.internal:11434/api/generate"
+      MCP_URL: "http://stig-mcp:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - stig-net
+    command: bash
+
+  # ── MCP server (exposes STIG tools to Ollama MCP client) ─────
+  mcp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    container_name: stig-mcp
+    depends_on:
+      - target
+    volumes:
+      - .:/app
+      - ./results:/results
+      - ./reports:/reports
+      - ./knowledge_base:/app/knowledge_base
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TARGET_CONTAINER: "stig-target"
+      OLLAMA_URL: "http://host.docker.internal:11434/api/generate"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    networks:
+      - stig-net
+    command: python agent/mcp_server.py sse
+
+networks:
+  stig-net:
+    driver: bridge

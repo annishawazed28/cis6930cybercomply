@@ -1,0 +1,29 @@
+# STIG Hardening Agent — Python dependencies
+
+# XML parsing (SCAP/XCCDF result files)
+lxml>=5.0
+
+# HTTP requests (Ollama API calls)
+requests>=2.31
+
+# Config file parsing
+pyyaml>=6.0
+
+# Pretty terminal output (progress tables, panels)
+rich>=13.0
+
+# HTML report templating
+jinja2>=3.1
+
+# Markdown → HTML conversion (for --html report flag)
+markdown>=3.5
+
+# Vector database for knowledge base (semantic search across versions)
+chromadb>=0.5
+
+# MCP server (exposes tools to Ollama MCP client)
+mcp[cli]>=1.0
+
+# Testing
+pytest>=7.4
+pytest-cov>=4.1

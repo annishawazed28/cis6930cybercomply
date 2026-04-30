@@ -1,0 +1,79 @@
+# This code may contain AI geneated content
+# config.yaml
+# Central configuration for the STIG Hardening Agent.
+
+# ── Run mode ──────────────────────────────────────────────────
+# "docker" → scanner uses `docker exec` to run oscap in stig-target container
+# "local"  → scanner runs oscap directly (WSL2 / native Linux only)
+mode: docker
+
+# ── Scanner settings ──────────────────────────────────────────
+scanner:
+  # Path to the SCAP datastream file INSIDE the target container
+  scap_content: /usr/share/xml/scap/ssg/content/ssg-rl9-ds.xml
+
+  # STIG profile to scan against.
+  # Other options:
+  #   xccdf_org.ssgproject.content_profile_cis           (CIS Benchmark Level 1)
+  #   xccdf_org.ssgproject.content_profile_cis_server_l2 (CIS Level 2, strict)
+  #   xccdf_org.ssgproject.content_profile_ospp          (Common Criteria)
+  profile: xccdf_org.ssgproject.content_profile_stig
+
+  # Where scan XML results are saved (inside the agent container / on host)
+  output_dir: /results
+
+# ── Docker settings ───────────────────────────────────────────
+docker:
+  # Name of the Rocky Linux target container (must match docker-compose.yml)
+  target_container: stig-target
+
+  # Path inside the target container where oscap writes its XML output
+  # Must be on the shared bind-mount volume so the agent can read it
+  remote_result_path: /results/scan_latest.xml
+
+# ── LLM settings ─────────────────────────────────────────────
+llm:
+  # Model to use — must be pulled first: ollama pull llama3.2
+  model: llama3.2
+
+  # Ollama API endpoint.
+  # Docker:  host.docker.internal reaches Ollama on your Windows host
+  # WSL2:    use the nameserver IP from /etc/resolv.conf
+  # Local:   http://localhost:11434/api/generate
+  ollama_url: "http://host.docker.internal:11434/api/generate"
+
+  # Max number of HIGH severity findings to send to the LLM.
+  # A fresh Rocky 9 scan produces ~200 findings — cap at 10 for demo speed.
+  max_high_findings: 10
+
+  # Seconds to wait for a single LLM response before timing out
+  timeout_seconds: 120
+
+  # LLM creativity (0.0 = deterministic, 1.0 = creative)
+  # Keep low for security advice — we want consistent, factual output
+  temperature: 0.2
+
+  # Max tokens per LLM response (~400 words)
+  max_tokens: 600
+
+# ── Report settings ───────────────────────────────────────────
+report:
+  # Where reports are written
+  output_dir: /reports
+
+  # Also generate an HTML version alongside the Markdown report
+  generate_html: true
+
+# ── Knowledge base settings ───────────────────────────────────
+knowledge_base:
+  # Root directory for ChromaDB vector store and SQLite index
+  dir: knowledge_base
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  # debug | info | warning | error
+  level: info
+
+  # Set to true to save a log file alongside reports
+  save_log_file: false
+  log_path: /reports/agent.log
