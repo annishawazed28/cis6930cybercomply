@@ -271,6 +271,12 @@ stig-hardening-agent/
 ├── results/                 ← scan XML files
 ├── reports/                 ← generated reports
 └── knowledge_base/          ← ChromaDB + SQLite store
-```
+
+## Troubleshooting
+
+Clean Docker Cache before building the docker setup
+'''
+docker system prune -f
+'''
 
 ---
