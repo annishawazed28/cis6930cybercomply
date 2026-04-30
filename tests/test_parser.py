@@ -1,3 +1,4 @@
+# This may contain AI generated code
 # tests/test_parser.py
 import pytest
 from agent.parser import parse_results, get_stats, filter_by_severity, Finding
