@@ -1,3 +1,4 @@
+# This may contain AI generated code
 # tests/test_reporter.py
 import pytest
 from pathlib import Path
