@@ -1,0 +1,37 @@
+# This code may contain AI geneated content
+FROM python:3.11-slim
+
+# Install Docker CLI so the agent can run `docker exec` against
+# the host Docker daemon via the mounted socket.
+# Also install build deps for lxml and chromadb.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        libxml2-dev \
+        libxslt-dev \
+        gcc \
+        g++ && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+        https://download.docker.com/linux/debian bookworm stable" \
+        > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies first (cached layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy agent source code
+COPY agent/      ./agent/
+COPY main.py     .
+COPY evaluate.py .
+COPY config.yaml .
+
+CMD ["python", "main.py", "--help"]
